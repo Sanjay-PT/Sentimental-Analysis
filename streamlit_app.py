@@ -14,13 +14,13 @@ from sklearn.metrics import accuracy_score
 # -----------------------------
 # Page Config
 # -----------------------------
-st.set_page_config(page_title="Advanced Tweet Sentiment Analyzer", layout="centered")
+st.set_page_config(page_title="Tweet Sentiment Analyzer", layout="centered")
 
-st.title("🐦 Advanced Tweet Sentiment Analysis")
-st.write("Now with Model Comparison & History Tracking 🚀")
-data = pd.read_csv("tweets.csv")
+st.title("🐦 Tweet Sentiment Analysis App")
+st.write("Analyze tweet sentiment using Machine Learning")
+
 # -----------------------------
-# Load Dataset
+# Load Dataset (GitHub friendly)
 # -----------------------------
 @st.cache_data
 def load_data():
@@ -36,7 +36,7 @@ except:
 # Text Cleaning
 # -----------------------------
 def clean_text(text):
-    text = text.lower()
+    text = str(text).lower()
     text = re.sub(r"http\S+", "", text)
     text = re.sub(r"@\w+", "", text)
     text = re.sub(r"#", "", text)
@@ -46,7 +46,7 @@ def clean_text(text):
 data['clean_text'] = data['text'].apply(clean_text)
 
 # -----------------------------
-# Vectorization
+# Feature Extraction
 # -----------------------------
 vectorizer = TfidfVectorizer(max_features=5000)
 X = vectorizer.fit_transform(data['clean_text'])
@@ -69,7 +69,7 @@ log_acc = accuracy_score(y_test, log_model.predict(X_test))
 nb_acc = accuracy_score(y_test, nb_model.predict(X_test))
 
 # -----------------------------
-# Sidebar Model Info
+# Sidebar Model Comparison
 # -----------------------------
 st.sidebar.header("📊 Model Comparison")
 
@@ -84,17 +84,14 @@ st.sidebar.table(accuracy_table)
 # Model Selection
 # -----------------------------
 model_choice = st.selectbox(
-    "Choose Model for Prediction",
+    "Choose Model",
     ["Logistic Regression", "Naive Bayes"]
 )
 
-if model_choice == "Logistic Regression":
-    model = log_model
-else:
-    model = nb_model
+model = log_model if model_choice == "Logistic Regression" else nb_model
 
 # -----------------------------
-# Prediction History Storage
+# Session History
 # -----------------------------
 if "history" not in st.session_state:
     st.session_state.history = []
@@ -108,22 +105,17 @@ user_input = st.text_area("Type your tweet here...")
 if st.button("Analyze Sentiment"):
 
     if user_input.strip() == "":
-        st.warning("Please enter some text.")
+        st.warning("Please enter a tweet")
     else:
         cleaned = clean_text(user_input)
-        vector_input = vectorizer.transform([cleaned])
+        vector = vectorizer.transform([cleaned])
 
-        prediction = model.predict(vector_input)[0]
-        probabilities = model.predict_proba(vector_input)[0]
-        confidence = round(np.max(probabilities) * 100, 2)
+        prediction = model.predict(vector)[0]
+        probabilities = model.predict_proba(vector)[0]
+        confidence = round(np.max(probabilities)*100, 2)
 
         # Emoji
-        if prediction.lower() == "positive":
-            emoji = "😊"
-        elif prediction.lower() == "negative":
-            emoji = "😞"
-        else:
-            emoji = "😐"
+        emoji = "😊" if prediction.lower()=="positive" else "😞" if prediction.lower()=="negative" else "😐"
 
         st.subheader(f"Prediction: {prediction} {emoji}")
         st.write(f"Confidence: {confidence}%")
@@ -131,37 +123,27 @@ if st.button("Analyze Sentiment"):
         # Pie Chart
         fig, ax = plt.subplots()
         ax.pie(probabilities, labels=model.classes_, autopct='%1.1f%%')
-        ax.set_title("Sentiment Probability Distribution")
+        ax.set_title("Probability Distribution")
         st.pyplot(fig)
 
-        # Save to history
+        # Save history
         st.session_state.history.append({
             "Tweet": user_input,
             "Prediction": prediction,
             "Confidence (%)": confidence,
-            "Model Used": model_choice
+            "Model": model_choice
         })
 
 # -----------------------------
-# Display History
+# Show History
 # -----------------------------
 if st.session_state.history:
     st.subheader("📜 Prediction History")
+    df = pd.DataFrame(st.session_state.history)
+    st.dataframe(df)
 
-    history_df = pd.DataFrame(st.session_state.history)
-    st.dataframe(history_df)
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button("Download CSV", csv, "history.csv", "text/csv")
 
-    # Download Button
-    csv = history_df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        "⬇ Download History as CSV",
-        csv,
-        "sentiment_history.csv",
-        "text/csv"
-    )
-
-# -----------------------------
-# Footer
-# -----------------------------
 st.markdown("---")
-st.write("Enhanced Version with Model Comparison & History Tracking 🚀")
+st.write("Deployed using Streamlit 🚀")
