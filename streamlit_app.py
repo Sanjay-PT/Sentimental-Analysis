@@ -48,7 +48,11 @@ data['clean_text'] = data['text'].apply(clean_text)
 # -----------------------------
 # Feature Extraction
 # -----------------------------
-vectorizer = TfidfVectorizer(max_features=5000)
+vectorizer = TfidfVectorizer(
+    max_features=5000,
+    ngram_range=(1,2),
+    stop_words='english'
+)
 X = vectorizer.fit_transform(data['clean_text'])
 y = data['sentiment']
 
@@ -59,7 +63,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # -----------------------------
 # Train Models
 # -----------------------------
-log_model = LogisticRegression()
+log_model = LogisticRegression(max_iter=2000, class_weight='balanced')
 nb_model = MultinomialNB()
 
 log_model.fit(X_train, y_train)
