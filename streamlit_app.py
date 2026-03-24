@@ -24,12 +24,12 @@ st.write("Analyze tweet sentiment using Machine Learning")
 # -----------------------------
 @st.cache_data
 def load_data():
-    return pd.read_csv("twitter_sentiment.csv")
+    return pd.read_csv("twitter_sentiment_small.csv")
 
 try:
     data = load_data()
 except:
-    st.error("Dataset file 'twitter_sentiment.csv' not found!")
+    st.error("Dataset file 'twitter_sentiment_small.csv' not found!")
     st.stop()
 
 # -----------------------------
